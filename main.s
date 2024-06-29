@@ -1,43 +1,49 @@
 .include "nes.inc"
 ; --------------------------------------------------------------------------------------------------
+; The header is the information about the NES cartridge, that determines things as the
+; ROM banks and if it is for NTSC or PAL and similar.
 .segment "HEADER"
 .byte "NES", $1A ; ID
 .byte 2 ; Number of 16 KB PRG ROM banks
-.byte 0 ; Number of 8 KB CHR ROM banks
+.byte 1 ; Number of 8 KB CHR ROM banks
 .byte $01 ; Flags 6: Mapper, mirroring, battery, trainer
 .byte $00 ; Flags 7: Mapper, VS/Playchoice, NES 2.0
 .byte $00 ; Flags 8: PRG-RAM size
-.byte $01 ; Flags 9: TV system
+.byte $01 ; Flags 9: TV system - PAL
 .byte $00 ; Flags 10: TV system, PRG-RAM presence
 .byte $00, $00, $00, $00, $00 ; Padding bytes
 
 
 ; --------------------------------------------------------------------------------------------------
-.segment "RODATA"
-tile_data:
-	; Plane 0 (low bit)
-	.byte %00111100 ; Row 0
-	.byte %01100110 ; Row 1
-	.byte %01100110 ; Row 2
-	.byte %01100110 ; Row 3
-	.byte %01111110 ; Row 4
-	.byte %01111110 ; Row 5
-	.byte %01100110 ; Row 6
-	.byte %00000000 ; Row 7
-	; Plane 1 (high bit)
-	.byte %00000000 ; Row 0
-	.byte %00000000 ; Row 1
-	.byte %00011000 ; Row 2
-	.byte %00100100 ; Row 3
-	.byte %00111100 ; Row 4
-	.byte %00100100 ; Row 5
-	.byte %00011000 ; Row 6
-	.byte %00000000 ; Row 7
+; The tile information in ROM. The colors that define each pixel. NES has two BIT planes, with a possibility
+; of three colors (and a background color) for each pixel. Each spritet takes up 16 octets.
+; The colors are looked up using the palette specified in the sprite attributes.
+.segment "TILES"
+.incbin "background.chr"
+.incbin "sprites.chr"
 
 
 ; --------------------------------------------------------------------------------------------------
+; ReadOnlyData. Constants
+.segment "RODATA"
+palette_colors:
+; https://www.nesdev.org/wiki/PPU_palettes#Palettes
+;.byte $2d ; gray. universal background color
+;.byte $2d ; red. for the hat. pal0, color1
+;.byte $2d ; skinton-ish. pal0, color2
+;.byte $2d ; eye and mouth. pal0, color3
+.res 16 ; to be defined later
+; Sprite palette
+.byte $2d ; gray. universal background color
+.byte $05 ; red. for the hat. pal4, color1
+.byte $38 ; eye and mouth. pal4, color2
+.byte $17 ; skinton-ish. pal4, color3
+.res 12 ; to be defined later
+; --------------------------------------------------------------------------------------------------
 ; Zero page segment must be before code segments, so the compiler knows
 ; that it should use zero-page-addressing.
+; Here are all the variables needed for the game. It is recommended to keep it to under 256 octets
+; for faster access.
 .segment "ZEROPAGE"
 bg_color: .res 1
 tile_num: .res 1
@@ -46,19 +52,21 @@ sprite_attribute: .res 1
 
 
 ; --------------------------------------------------------------------------------------------------
+; Here is the boot pointers so the NES knows what address to call for nmi, irq AND reset.
+; on boot up it calls the reset vector.
 .segment "VECTORS"
-; .org $FFFA
 .word nmi
-; .org $FFFC
 .word reset
-; .org $FFFE
 .word irq
 
+; --------------------------------------------------------------------------------------------------
+; We store the sprite (OAM) information in this RAM area. The data here will be copied using a very
+; fast DMA transfer to the graphics chip (PPU) after each vertical blank.
 .segment "OAM"
 oam: .res 256 ; sprite OAM data to be uploaded by DMA
 
-
 ; --------------------------------------------------------------------------------------------------
+; Here follows the normal code
 .segment "CODE"
 reset:
 	sei ; Disable interrupts. Should be first to make sure no interupt happens
@@ -92,6 +100,8 @@ reset:
 
 	jsr wait_vertical_blank
 	jsr initialize_ppu
+	jsr initialize_palettes
+	jsr hide_sprites
 
 	lda #$2D ; gray color
 	jsr change_background_color
@@ -107,6 +117,27 @@ initialize_ppu:
 	lda #%00011110     ; Enable background rendering
 	sta PPU_MASK
 	rts
+
+
+; Initialize the palettes
+; https://www.nesdev.org/wiki/PPU_palettes
+; (4 colors for each palette. 4 palettes for background AND 4 for sprites = 8 x 4)
+; first color in first palette is normally used as the default universal background color
+initialize_palettes:
+	lda #$3F ; Palette starts at $3F00
+	sta PPU_ADDR ; Set PPU address high byte
+	lda #$00
+	sta PPU_ADDR ; Set PPU address low byte
+
+    ldx #0
+@loop:
+    lda palette_colors, x   ; Load color value from palette_colors array
+    sta PPU_DATA      ; Write to PPU data port (palette memory)
+    inx             ; Increment X to move to next palette entry
+    cpx #32          ; Check if we've written all 32 entries
+    bne @loop
+
+    rts
 
 wait_vertical_blank:
 	bit PPU_STATUS
@@ -129,24 +160,20 @@ change_background_color:
 	sta PPU_DATA ; Write color to PPU
 	rts
 
-write_tile_data_to_vram:
-	lda PPU_STATUS ; Read PPU status to reset the address latch
-	lda #$10          ; Set PPU address to $2000 (start of nametable (pixel data) table)
-	sta PPU_ADDR
-	lda #$30
-	sta PPU_ADDR
 
-	ldx #$00          ; Initialize index to 0
 
-@write_loop:
-	lda tile_data, x ; Load tile data byte
-	sta PPU_DATA ; Write to PPU
-	inx ; Increment index
-	cpx #$10          ; Check if all 16 bytes are written
-	bne @write_loop ; Loop until all bytes are written
+hide_sprites:
+   lda #255
+   ldx #0
 
-	rts ; Return from subroutine
-
+@next_sprite:
+   sta oam, x ; set sprite Y = 255. Sprites are always enabled, but put them outside of the lower part of the screen.
+   inx ; move past y position
+   inx ; skip tile_number
+   inx ; skip attributes
+   inx ; skip X position
+   bne @next_sprite ; sprite data is 256 octets, so when X is 0 again, we are done
+   rts
 
 ; a = sprite number, x=x, y=y
 set_sprite:
@@ -174,6 +201,8 @@ set_sprite:
 	sta oam, x
 	rts
 
+; defines the sprite the first time, usually the sprite attribute doesnt have to
+; be updated each tick
 define_sprite:
 	txa
 	pha ; save x
@@ -205,13 +234,11 @@ dma_sprite:
 	rts
 
 init:
-	jsr write_tile_data_to_vram
-
 	lda #0
 	sta sprite_number
-	lda #3
+	lda #1
 	sta tile_num
-	lda 1
+	lda #0 ; use first palette entry
 	sta sprite_attribute
 	ldx bg_color
 	ldy #0
@@ -226,7 +253,7 @@ tick:
 	sta sprite_number
 	ldx bg_color
 	ldy #0
-	lda #3
+	lda #1
 	sta tile_num
 	jsr set_sprite
 

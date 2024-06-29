@@ -1,3 +1,5 @@
 *.nes
 *.fdb
 *.o
+*.exe
+.vscode/
