@@ -24,7 +24,7 @@
 
 
 ; --------------------------------------------------------------------------------------------------
-; ReadOnlyData. Constants
+; ReadOnlyData. Constant values that never change.
 .segment "RODATA"
 palette_colors:
 ; https://www.nesdev.org/wiki/PPU_palettes#Palettes
@@ -39,20 +39,20 @@ palette_colors:
 .byte $38 ; eye and mouth. pal4, color2
 .byte $17 ; skinton-ish. pal4, color3
 .res 12 ; to be defined later
+
 ; --------------------------------------------------------------------------------------------------
 ; Zero page segment must be before code segments, so the compiler knows
 ; that it should use zero-page-addressing.
 ; Here are all the variables needed for the game. It is recommended to keep it to under 256 octets
-; for faster access.
+; for faster access. Only add variables that change, add constant things to RODATA segment.
 .segment "ZEROPAGE"
 bg_color: .res 1
 tile_num: .res 1
 sprite_number: .res 1
 sprite_attribute: .res 1
 
-
 ; --------------------------------------------------------------------------------------------------
-; Here is the boot pointers so the NES knows what address to call for nmi, irq AND reset.
+; Here are the boot pointers so the NES knows what address to call for nmi, irq AND reset.
 ; on boot up it calls the reset vector.
 .segment "VECTORS"
 .word nmi
@@ -160,8 +160,6 @@ change_background_color:
 	sta PPU_DATA ; Write color to PPU
 	rts
 
-
-
 hide_sprites:
    lda #255
    ldx #0
@@ -228,7 +226,7 @@ define_sprite:
 	sta oam, x
 	rts
 
-dma_sprite:
+dma_all_sprites:
 	lda #$02 ; dma copy from $0200 to OAM
 	sta OAM_DMA
 	rts
@@ -236,28 +234,77 @@ dma_sprite:
 init:
 	lda #0
 	sta sprite_number
+	lda #0
+	sta tile_num
+	lda #0 ; use first palette entry
+	sta sprite_attribute
+	ldx bg_color
+	ldy #0
+	jsr define_sprite
+
+	lda #1
+	sta sprite_number
 	lda #1
 	sta tile_num
 	lda #0 ; use first palette entry
 	sta sprite_attribute
 	ldx bg_color
 	ldy #0
-
 	jsr define_sprite
+
 
 	rts
 
 tick:
 	inc bg_color
+
 	lda #0
 	sta sprite_number
 	ldx bg_color
+	ldy #0
+	lda #0
+	sta tile_num
+	jsr set_sprite
+
+	lda #1
+	sta sprite_number
+
+	; offset X with 8
+	lda bg_color
+	clc ; clear carry, otherwise it might be added in the adc opcode
+	adc #8
+	tax
+
 	ldy #0
 	lda #1
 	sta tile_num
 	jsr set_sprite
 
-	jsr dma_sprite
+
+	lda #2
+	sta sprite_number
+
+	ldx bg_color
+	ldy #8
+	lda #16
+	sta tile_num
+	jsr set_sprite
+
+
+	lda #3
+	sta sprite_number
+
+	; offset X with 8
+	lda bg_color
+	clc ; clear carry, otherwise it might be added in the adc opcode
+	adc #8
+	tax
+	ldy #8
+	lda #17
+	sta tile_num
+	jsr set_sprite
+
+	jsr dma_all_sprites
 
 	rts
 
