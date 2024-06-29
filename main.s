@@ -1,5 +1,3 @@
-.include "nes.inc"
-.include "input.s"
 ; --------------------------------------------------------------------------------------------------
 ; The header is the information about the NES cartridge, that determines things as the
 ; ROM banks and if it is for NTSC or PAL and similar.
@@ -14,6 +12,50 @@
 .byte $00 ; Flags 10: TV system, PRG-RAM presence
 .byte $00, $00, $00, $00, $00 ; Padding bytes
 
+; --------------------------------------------------------------------------------------------------
+; Zero page segment must be before code segments, so the compiler knows
+; that it should use zero-page-addressing.
+; Here are all the variables needed for the game. It is recommended to keep it to under 256 octets
+; for faster access. Only add variables that change, add constant things to RODATA segment.
+.segment "ZEROPAGE"
+bg_color: .res 1
+tile_num: .res 1
+sprite_number: .res 1
+sprite_attribute: .res 1
+
+; --------------------------------------------------------------------------------------------------
+; BSS segment
+.segment "BSS" ; RAM variables that doesn't fit in ZEROPAGE
+NUM_ENTITIES = 10
+ENTITY_POS_SIZE = 2        ; Each position is 2 bytes (8.8 fixed-point)
+ENTITY_SPEED_SIZE = 2      ; Each speed is 2 bytes (8.8 fixed-point)
+ENTITY_ACCEL_SIZE = 2      ; Each acceleration is 2 bytes (8.8 fixed-point)
+ENTITY_INPUT_DIRECTION_SIZE = 1 ; $00, $01 or $FF
+
+POS_ARRAY_SIZE = ENTITY_POS_SIZE * NUM_ENTITIES
+SPEED_ARRAY_SIZE = ENTITY_SPEED_SIZE * NUM_ENTITIES
+COMMON_ARRAY_SIZE = POS_ARRAY_SIZE
+INPUT_DIRECTION_ARRAY_SIZE = ENTITY_INPUT_DIRECTION_SIZE * NUM_ENTITIES
+ACCEL_ARRAY_SIZE = ENTITY_ACCEL_SIZE * NUM_ENTITIES
+
+entity_positions:
+    .res POS_ARRAY_SIZE   ; Reserve space for positions
+
+entity_speeds:
+    .res SPEED_ARRAY_SIZE ; Reserve space for speeds
+
+entity_input_directions:
+    .res INPUT_DIRECTION_ARRAY_SIZE ; Reserve space for input directions
+
+entity_accels:
+    .res ACCEL_ARRAY_SIZE ; Reserve space for accelerations
+
+
+; --------------------------------------------------------------------------------------------------
+; We store the sprite (OAM) information in this RAM area. The data here will be copied using a very
+; fast DMA transfer to the graphics chip (PPU) after each vertical blank.
+.segment "OAM"
+oam: .res 256 ; sprite OAM data to be uploaded by DMA
 
 ; --------------------------------------------------------------------------------------------------
 ; The tile information in ROM. The colors that define each pixel. NES has two BIT planes, with a possibility
@@ -23,6 +65,13 @@
 .incbin "background.chr"
 .incbin "sprites.chr"
 
+; --------------------------------------------------------------------------------------------------
+; Here are the boot pointers so the NES knows what address to call for nmi, irq AND reset.
+; on boot up it calls the reset vector.
+.segment "VECTORS"
+.word nmi
+.word reset
+.word irq
 
 ; --------------------------------------------------------------------------------------------------
 ; ReadOnlyData. Constant values that never change.
@@ -41,34 +90,13 @@ palette_colors:
 .byte $17 ; skinton-ish. pal4, color3
 .res 12 ; to be defined later
 
-; --------------------------------------------------------------------------------------------------
-; Zero page segment must be before code segments, so the compiler knows
-; that it should use zero-page-addressing.
-; Here are all the variables needed for the game. It is recommended to keep it to under 256 octets
-; for faster access. Only add variables that change, add constant things to RODATA segment.
-.segment "ZEROPAGE"
-bg_color: .res 1
-tile_num: .res 1
-sprite_number: .res 1
-sprite_attribute: .res 1
-input_x_direction: .res 1
-input_y_direction: .res 1
-avatar_x: .res 1
-avatar_x_movement: .res 1
 
-; --------------------------------------------------------------------------------------------------
-; Here are the boot pointers so the NES knows what address to call for nmi, irq AND reset.
-; on boot up it calls the reset vector.
-.segment "VECTORS"
-.word nmi
-.word reset
-.word irq
+.include "nes.inc"
+.include "input.s"
+.include "ppu.s"
+.include "render.s"
+.include "simulate.s"
 
-; --------------------------------------------------------------------------------------------------
-; We store the sprite (OAM) information in this RAM area. The data here will be copied using a very
-; fast DMA transfer to the graphics chip (PPU) after each vertical blank.
-.segment "OAM"
-oam: .res 256 ; sprite OAM data to be uploaded by DMA
 
 ; --------------------------------------------------------------------------------------------------
 ; Here follows the normal code
@@ -104,50 +132,10 @@ reset:
 	bne @clear_loop ; loops 256 times
 
 	jsr wait_vertical_blank
-	jsr initialize_ppu
-	jsr initialize_palettes
-	jsr hide_sprites
-
-	lda #$2D ; gray color
-	jsr change_background_color
-
-	jsr wait_vertical_blank
-	jsr init
+	jsr render_init
 
 	jmp main_loop
 
-initialize_ppu:
-	lda #%00001000
-	sta PPU_CTRL
-	lda #%00011110     ; Enable background rendering
-	sta PPU_MASK
-	rts
-
-
-; Initialize the palettes
-; https://www.nesdev.org/wiki/PPU_palettes
-; (4 colors for each palette. 4 palettes for background AND 4 for sprites = 8 x 4)
-; first color in first palette is normally used as the default universal background color
-initialize_palettes:
-	lda #$3F ; Palette starts at $3F00
-	sta PPU_ADDR ; Set PPU address high byte
-	lda #$00
-	sta PPU_ADDR ; Set PPU address low byte
-
-    ldx #0
-@loop:
-    lda palette_colors, x   ; Load color value from palette_colors array
-    sta PPU_DATA      ; Write to PPU data port (palette memory)
-    inx             ; Increment X to move to next palette entry
-    cpx #32          ; Check if we've written all 32 entries
-    bne @loop
-
-    rts
-
-wait_vertical_blank:
-	bit PPU_STATUS
-	bpl wait_vertical_blank
-	rts
 
 main_loop:
 	jsr wait_vertical_blank
@@ -155,169 +143,7 @@ main_loop:
 	jsr simulate
 	jmp main_loop
 
-
-change_background_color:
-	pha
-	lda #$3F
-	sta PPU_ADDR ; Set PPU address high byte
-	lda #$00
-	sta PPU_ADDR ; Set PPU address low byte
-	pla ; Load the background color value
-	sta PPU_DATA ; Write color to PPU
-	rts
-
-hide_sprites:
-   lda #255
-   ldx #0
-
-@next_sprite:
-   sta oam, x ; set sprite Y = 255. Sprites are always enabled, but put them outside of the lower part of the screen.
-   inx ; move past y position
-   inx ; skip tile_number
-   inx ; skip attributes
-   inx ; skip X position
-   bne @next_sprite ; sprite data is 256 octets, so when X is 0 again, we are done
-   rts
-
-; a = sprite number, x=x, y=y
-set_sprite:
-	txa
-	pha ; save x
-
-	lda sprite_number
-	asl
-	asl ; sprite number x 4
-	tax
-
-	tya
-	sta oam, x ; store Y
-	inx
-
-	lda tile_num
-	sta oam, x ; store tile_num
-	inx
-
-	;lda #0 ; store attributes
-	;sta oam, x
-	inx
-
-	pla ; pop x
-	sta oam, x
-	rts
-
-; defines the sprite the first time, usually the sprite attribute doesnt have to
-; be updated each tick
-define_sprite:
-	txa
-	pha ; save x
-
-	lda sprite_number
-	asl
-	asl ; sprite number x 4
-	tax
-
-	tya
-	sta oam, x ; store Y
-	inx
-
-	lda tile_num
-	sta oam, x ; store tile_num
-	inx
-
-	lda sprite_attribute
-	sta oam, x
-	inx
-
-	pla ; pop X
-	sta oam, x
-	rts
-
-dma_all_sprites:
-	lda #$02 ; dma copy from $0200 to OAM
-	sta OAM_DMA
-	rts
-
-init:
-	lda #0
-	sta sprite_number
-	lda #0
-	sta tile_num
-	lda #0 ; use first palette entry
-	sta sprite_attribute
-	ldx bg_color
-	ldy #0
-	jsr define_sprite
-
-	lda #1
-	sta sprite_number
-	lda #1
-	sta tile_num
-	lda #0 ; use first palette entry
-	sta sprite_attribute
-	ldx bg_color
-	ldy #0
-	jsr define_sprite
-
-
-	rts
-
-render:
-	lda #0
-	sta sprite_number
-	ldx avatar_x
-	ldy #0
-	lda #0
-	sta tile_num
-	jsr set_sprite
-
-	lda #1
-	sta sprite_number
-
-	; offset X with 8
-	lda avatar_x
-	clc ; clear carry, otherwise it might be added in the adc opcode
-	adc #8
-	tax
-
-	ldy #0
-	lda #1
-	sta tile_num
-	jsr set_sprite
-
-
-	lda #2
-	sta sprite_number
-
-	ldx avatar_x
-	ldy #8
-	lda #16
-	sta tile_num
-	jsr set_sprite
-
-
-	lda #3
-	sta sprite_number
-
-	; offset X with 8
-	lda avatar_x
-	clc ; clear carry, otherwise it might be added in the adc opcode
-	adc #8
-	tax
-	ldy #8
-	lda #17
-	sta tile_num
-	jsr set_sprite
-
-	jsr dma_all_sprites
-
-	rts
-
-; result in X
-
-;	tya
-
-;@check_next:
-
+;
 read_joypad_and_set_direction:
 	jsr read_joypad0
 	txa ; put read mask in a
@@ -335,18 +161,6 @@ read_joypad_and_set_direction:
 @check_vertical:
 	rts
 
-simulate:
-	jsr read_joypad_and_set_direction
-	stx input_x_direction
-	; Update avatar x position
-	lda input_x_direction
-	asl a
-	sta avatar_x_movement
-	lda avatar_x
-	clc
-	adc avatar_x_movement
-	sta avatar_x
-	rts
 
 nmi:
 	; ignore NMI
