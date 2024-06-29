@@ -22,6 +22,12 @@ bg_color: .res 1
 tile_num: .res 1
 sprite_number: .res 1
 sprite_attribute: .res 1
+value_high: .res 1
+value_low: .res 1
+max_value_high: .res 1
+max_value_low: .res 1
+min_value_high: .res 1
+min_value_low: .res 1
 
 ; --------------------------------------------------------------------------------------------------
 ; BSS segment
@@ -34,6 +40,7 @@ ENTITY_INPUT_DIRECTION_SIZE = 1 ; $00, $01 or $FF
 
 POS_ARRAY_SIZE = ENTITY_POS_SIZE * NUM_ENTITIES
 SPEED_ARRAY_SIZE = ENTITY_SPEED_SIZE * NUM_ENTITIES
+MAX_SPEED_ARRAY_SIZE = SPEED_ARRAY_SIZE
 COMMON_ARRAY_SIZE = POS_ARRAY_SIZE
 INPUT_DIRECTION_ARRAY_SIZE = ENTITY_INPUT_DIRECTION_SIZE * NUM_ENTITIES
 ACCEL_ARRAY_SIZE = ENTITY_ACCEL_SIZE * NUM_ENTITIES
@@ -44,12 +51,14 @@ entity_positions:
 entity_speeds:
     .res SPEED_ARRAY_SIZE ; Reserve space for speeds
 
+entity_max_speeds:
+	.res MAX_SPEED_ARRAY_SIZE;
+
 entity_input_directions:
     .res INPUT_DIRECTION_ARRAY_SIZE ; Reserve space for input directions
 
 entity_accels:
     .res ACCEL_ARRAY_SIZE ; Reserve space for accelerations
-
 
 ; --------------------------------------------------------------------------------------------------
 ; We store the sprite (OAM) information in this RAM area. The data here will be copied using a very
@@ -96,7 +105,7 @@ palette_colors:
 .include "ppu.s"
 .include "render.s"
 .include "simulate.s"
-
+.include "math.s"
 
 ; --------------------------------------------------------------------------------------------------
 ; Here follows the normal code
@@ -133,6 +142,7 @@ reset:
 
 	jsr wait_vertical_blank
 	jsr render_init
+	jsr simulate_init
 
 	jmp main_loop
 
