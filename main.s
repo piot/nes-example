@@ -1,4 +1,5 @@
 .include "nes.inc"
+.include "input.s"
 ; --------------------------------------------------------------------------------------------------
 ; The header is the information about the NES cartridge, that determines things as the
 ; ROM banks and if it is for NTSC or PAL and similar.
@@ -50,6 +51,10 @@ bg_color: .res 1
 tile_num: .res 1
 sprite_number: .res 1
 sprite_attribute: .res 1
+input_x_direction: .res 1
+input_y_direction: .res 1
+avatar_x: .res 1
+avatar_x_movement: .res 1
 
 ; --------------------------------------------------------------------------------------------------
 ; Here are the boot pointers so the NES knows what address to call for nmi, irq AND reset.
@@ -146,7 +151,8 @@ wait_vertical_blank:
 
 main_loop:
 	jsr wait_vertical_blank
-	jsr tick
+	jsr render
+	jsr simulate
 	jmp main_loop
 
 
@@ -255,12 +261,10 @@ init:
 
 	rts
 
-tick:
-	inc bg_color
-
+render:
 	lda #0
 	sta sprite_number
-	ldx bg_color
+	ldx avatar_x
 	ldy #0
 	lda #0
 	sta tile_num
@@ -270,7 +274,7 @@ tick:
 	sta sprite_number
 
 	; offset X with 8
-	lda bg_color
+	lda avatar_x
 	clc ; clear carry, otherwise it might be added in the adc opcode
 	adc #8
 	tax
@@ -284,7 +288,7 @@ tick:
 	lda #2
 	sta sprite_number
 
-	ldx bg_color
+	ldx avatar_x
 	ldy #8
 	lda #16
 	sta tile_num
@@ -295,7 +299,7 @@ tick:
 	sta sprite_number
 
 	; offset X with 8
-	lda bg_color
+	lda avatar_x
 	clc ; clear carry, otherwise it might be added in the adc opcode
 	adc #8
 	tax
@@ -306,6 +310,42 @@ tick:
 
 	jsr dma_all_sprites
 
+	rts
+
+; result in X
+
+;	tya
+
+;@check_next:
+
+read_joypad_and_set_direction:
+	jsr read_joypad0
+	txa ; put read mask in a
+	tay ; for later processing below
+	ldx #0
+	and $01 ; test right
+	beq @check_left; if zero jump
+	ldx #1
+	jmp @check_vertical
+@check_left:
+	tya ; bring back the mask from y
+	and $02 ; test left
+	beq @check_vertical; if zero jump
+	ldx #$ff ; -1
+@check_vertical:
+	rts
+
+simulate:
+	jsr read_joypad_and_set_direction
+	stx input_x_direction
+	; Update avatar x position
+	lda input_x_direction
+	asl a
+	sta avatar_x_movement
+	lda avatar_x
+	clc
+	adc avatar_x_movement
+	sta avatar_x
 	rts
 
 nmi:
