@@ -21,17 +21,13 @@
 
     tya
 
-    ; Now combine with the high byte by rotating into X
-    lsr a                 ; Shift A right 1 bit (bit 0 -> Carry)
+    ; make space for the other lower integer part
+    asl a
+    asl a
+    asl a
+    asl a
+    ora temp
 
-    rol temp                ; Rotate into X (rotate and set bit 0 from Carry)
-    lsr a                 ; Shift A right 1 bit (bit 0 -> Carry)
-    rol temp                ; Rotate into X (rotate and set bit 0 from Carry)
-    lsr a                 ; Shift A right 1 bit (bit 0 -> Carry)
-    rol temp                ; Rotate into X (rotate and set bit 0 from Carry)
-    lsr a                 ; Shift A right 1 bit (bit 0 -> Carry)
-    rol temp                ; Rotate into X (rotate and set bit 0 from Carry)
-    lda temp
 .endmacro
 
 

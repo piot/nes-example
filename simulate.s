@@ -8,11 +8,8 @@ simulate:
 	stx entity_input_directions ; the player avatar is on entity zero
 
 	jsr set_x_velocity_from_direction
-    ;jsr update_x_velocity_from_acceleration
-	;jsr clamp_x_velocity
 	jsr update_x_positions_from_velocity
 	rts
-
 
 
 ; ------
@@ -20,6 +17,9 @@ set_x_velocity_from_direction:
 	ldx #0
 @loop:
 	lda entity_input_directions,x
+	asl a
+	asl a
+	asl a
 	asl a
 	sta entity_velocities,x
 	inx
@@ -75,4 +75,3 @@ update_x_positions_from_velocity:
 	cpx #POS_ARRAY_SIZE  ; Check if we've processed all entities
     bne @loop
 	rts
-
