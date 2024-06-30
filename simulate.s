@@ -34,12 +34,12 @@ update_x_positions_from_velocity:
 @loop:
     clc
 
-	; since we can not add a signed 4.4 to an unsigned 8.4 (12.4) fixed point, we
-	; unfortunately have to check the sign of the velocity.
+	; since we can not add a signed 4.4 to an unsigned 12.4 fixed point, in a simple manner.
+	; we unfortunately have to check the sign of the velocity and do custom code for each case.
 	lda entity_velocities,x
 	bmi @handle_negative
 
-	; positive case, it is super simple, the normal adc should work
+	; positive velocity case, it is super simple, the normal adc should work
 	; positions += velocities
     lda entity_positions+1,x
     adc entity_velocities,y
@@ -51,23 +51,24 @@ update_x_positions_from_velocity:
 	jmp @done
 
 @handle_negative:
-	; Negative velocity
+	; Negative velocity case
 	; TODO: there must be a cleaner solution than this
 	lda #0
 	sec
-	sbc entity_velocities,y
-	sta temp
+	sbc entity_velocities,y ; convert negative velocity to a positive value that can be subtracted below
+	sta temp ; store the positive velocity in temp
 	lda entity_positions+1
 	sec
-	sbc temp
-	sta entity_positions+1
+	sbc temp ; subtract the positive velocity from the lower part of the position. the carry flag is set if it was negative.
+	sta entity_positions+1 ; store the result back to the lower part
+
 	lda entity_positions
-	sbc #0
+	sbc #0 ; subtract the upper part of the position with 0 and carry. so if carry is set it subtracts 1, otherwise zero.
 	sta entity_positions
 
 @done:
 
-	; Advance two octets (8.4 fixed point).
+	; Advance two octets (12.4 fixed point).
     inx
     inx
 	iny

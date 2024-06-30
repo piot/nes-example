@@ -3,7 +3,7 @@
 ;  Licensed under the MIT License. See LICENSE in the project root for license information.
 ;---------------------------------------------------------------------------------------------------
 
-; Macro that converts a 8.4 fixed point (only used for positions) to the integer part
+; Macro that converts a 12.4 fixed point (only used for positions) to the integer part
 ; it is made as a macro since we have many positions in the game
 ; and calling each one with a jsr/rts opcode would be too slow.
 ; A = low part

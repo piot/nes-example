@@ -35,7 +35,7 @@ position_y_integer: .res 1
 ; BSS segment
 .segment "BSS" ; RAM variables that doesn't fit in ZEROPAGE
 NUM_ENTITIES = 10
-ENTITY_POS_SIZE = 2        ; Each position is 2 octets (8.4 fixed-point)
+ENTITY_POS_SIZE = 2        ; Each position is 2 octets (12.4 fixed-point)
 ENTITY_VELOCITY_SIZE = 1      ; Each velocity is 1 octet (4.4 fixed-point)
 ENTITY_INPUT_DIRECTION_SIZE = 1 ; $00, $01 or $FF
 
