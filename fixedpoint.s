@@ -11,7 +11,7 @@
 ; result will be stored in A
 .macro FIXED_TO_INT
     ; Shift the low byte right by 4 bits to get rid of the fraction part
-    ; what remains in A should only be the 4 bit integer part AAAA.0000
+    ; what remains in A should only be the 4 bit integer part
     lsr a                 ; Shift A right 1 bit
     lsr a                 ; Shift A right 1 bit
     lsr a                 ; Shift A right 1 bit
@@ -27,23 +27,5 @@
     asl a
     asl a
     ora temp
-
-.endmacro
-
-
-.macro FIXED_TO_INT_ADDR addr
-    txa
-    pha ; save x to be able to restore it later
-
-    ldx addr
-    lda addr+1
-
-    FIXED_TO_INT
-
-    tay ; save result in Y
-    pla
-    tax ; restore x
-
-    tya ; put back result in A
 
 .endmacro

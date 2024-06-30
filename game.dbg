@@ -4,7 +4,7 @@ file	id=0,name="main.s",size=6196,mtime=0x668126B0,mod=0
 file	id=1,name="background.chr",size=4096,mtime=0x667FB2F5,mod=0
 file	id=2,name="sprites.chr",size=4096,mtime=0x667FB2F5,mod=0
 file	id=3,name="nes.inc",size=1812,mtime=0x66810EF1,mod=0
-file	id=4,name="fixedpoint.s",size=1439,mtime=0x668144C5,mod=0
+file	id=4,name="fixedpoint.s",size=1177,mtime=0x66814558,mod=0
 file	id=5,name="input.s",size=1616,mtime=0x668115CD,mod=0
 file	id=6,name="ppu.s",size=2972,mtime=0x6681100C,mod=0
 file	id=7,name="render.s",size=1728,mtime=0x668144DA,mod=0
