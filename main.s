@@ -118,11 +118,24 @@ reset:
 	sta SND_CHN ; disable APU sound
 	sta APU_MODCTRL ; disable DMC IRQ
 
-	cld ; Clear decimal mode
+	cld ; Clear decimal mode. It is never used in a normal game.
 
 	ldx #$FF    ; Initialize stack pointer to $FF
 	txs ; initialize stack
 
+	lda #$ff
+	cmp #$01
+	bpl @positive
+	ldx #$ff
+	jmp @done
+@positive:
+	ldx #$00
+
+@done:
+
+
+; clearing is not really neccessary, but makes debugging so much easier since you can see a pattern
+; where data actually is stored.
 @clear_ram:
 ; clear all 2KB of RAM to 0, not that this will overwrite the stack, so it can not be in a subroutine.
 	lda #$00       ; load 0 into a register
@@ -140,7 +153,7 @@ reset:
 	inx
 	bne @clear_loop ; loops 256 times
 
-	jsr wait_vertical_blank
+	jsr wait_vertical_blank ; can only write to the PPU when in vertical blank (not rendering)
 	jsr render_init
 	jsr simulate_init
 
