@@ -1,3 +1,8 @@
+;---------------------------------------------------------------------------------------------------
+;  Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/nes-example
+;  Licensed under the MIT License. See LICENSE in the project root for license information.
+;---------------------------------------------------------------------------------------------------
+
 ; --------------------------------------------------------------------------------------------------
 ; The header is the information about the NES cartridge, that determines things as the
 ; ROM banks and if it is for NTSC or PAL and similar.
@@ -18,47 +23,39 @@
 ; Here are all the variables needed for the game. It is recommended to keep it to under 256 octets
 ; for faster access. Only add variables that change, add constant things to RODATA segment.
 .segment "ZEROPAGE"
+temp: .res 1
 bg_color: .res 1
 tile_num: .res 1
 sprite_number: .res 1
 sprite_attribute: .res 1
-value_high: .res 1
-value_low: .res 1
-max_value_high: .res 1
-max_value_low: .res 1
-min_value_high: .res 1
-min_value_low: .res 1
+position_x_integer: .res 1
+position_y_integer: .res 1
 
 ; --------------------------------------------------------------------------------------------------
 ; BSS segment
 .segment "BSS" ; RAM variables that doesn't fit in ZEROPAGE
 NUM_ENTITIES = 10
-ENTITY_POS_SIZE = 2        ; Each position is 2 bytes (8.8 fixed-point)
-ENTITY_SPEED_SIZE = 2      ; Each speed is 2 bytes (8.8 fixed-point)
-ENTITY_ACCEL_SIZE = 2      ; Each acceleration is 2 bytes (8.8 fixed-point)
+ENTITY_POS_SIZE = 2        ; Each position is 2 octets (8.4 fixed-point)
+ENTITY_VELOCITY_SIZE = 1      ; Each velocity is 1 octet (4.4 fixed-point)
 ENTITY_INPUT_DIRECTION_SIZE = 1 ; $00, $01 or $FF
 
 POS_ARRAY_SIZE = ENTITY_POS_SIZE * NUM_ENTITIES
-SPEED_ARRAY_SIZE = ENTITY_SPEED_SIZE * NUM_ENTITIES
-MAX_SPEED_ARRAY_SIZE = SPEED_ARRAY_SIZE
+VELOCITY_ARRAY_SIZE = ENTITY_VELOCITY_SIZE * NUM_ENTITIES
+MAX_VELOCITY_ARRAY_SIZE = VELOCITY_ARRAY_SIZE
 COMMON_ARRAY_SIZE = POS_ARRAY_SIZE
 INPUT_DIRECTION_ARRAY_SIZE = ENTITY_INPUT_DIRECTION_SIZE * NUM_ENTITIES
-ACCEL_ARRAY_SIZE = ENTITY_ACCEL_SIZE * NUM_ENTITIES
 
 entity_positions:
-    .res POS_ARRAY_SIZE   ; Reserve space for positions
+    .res POS_ARRAY_SIZE
 
-entity_speeds:
-    .res SPEED_ARRAY_SIZE ; Reserve space for speeds
+entity_velocities:
+    .res VELOCITY_ARRAY_SIZE
 
-entity_max_speeds:
-	.res MAX_SPEED_ARRAY_SIZE;
+entity_max_velocities:
+	.res MAX_VELOCITY_ARRAY_SIZE
 
 entity_input_directions:
-    .res INPUT_DIRECTION_ARRAY_SIZE ; Reserve space for input directions
-
-entity_accels:
-    .res ACCEL_ARRAY_SIZE ; Reserve space for accelerations
+    .res INPUT_DIRECTION_ARRAY_SIZE
 
 ; --------------------------------------------------------------------------------------------------
 ; We store the sprite (OAM) information in this RAM area. The data here will be copied using a very
@@ -100,12 +97,15 @@ palette_colors:
 .res 12 ; to be defined later
 
 
+; shared includes first
 .include "nes.inc"
+.include "fixedpoint.s"
+
+; sub systems
 .include "input.s"
 .include "ppu.s"
 .include "render.s"
 .include "simulate.s"
-.include "math.s"
 
 ; --------------------------------------------------------------------------------------------------
 ; Here follows the normal code
@@ -122,17 +122,6 @@ reset:
 
 	ldx #$FF    ; Initialize stack pointer to $FF
 	txs ; initialize stack
-
-	lda #$ff
-	cmp #$01
-	bpl @positive
-	ldx #$ff
-	jmp @done
-@positive:
-	ldx #$00
-
-@done:
-
 
 ; clearing is not really neccessary, but makes debugging so much easier since you can see a pattern
 ; where data actually is stored.
@@ -172,13 +161,13 @@ read_joypad_and_set_direction:
 	txa ; put read mask in a
 	tay ; for later processing below
 	ldx #0
-	and $01 ; test right
+	and #$01 ; test right
 	beq @check_left; if zero jump
 	ldx #1
 	jmp @check_vertical
 @check_left:
 	tya ; bring back the mask from y
-	and $02 ; test left
+	and #$02 ; test left
 	beq @check_vertical; if zero jump
 	ldx #$ff ; -1
 @check_vertical:

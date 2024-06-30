@@ -1,3 +1,10 @@
+;---------------------------------------------------------------------------------------------------
+;  Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/nes-example
+;  Licensed under the MIT License. See LICENSE in the project root for license information.
+;---------------------------------------------------------------------------------------------------
+
+; PPU functions
+
 initialize_ppu:
 	lda #%00001000
 	sta PPU_CTRL
@@ -5,12 +12,13 @@ initialize_ppu:
 	sta PPU_MASK
 	rts
 
+; busy wait for the vertical blanking to start
 wait_vertical_blank:
 	bit PPU_STATUS
 	bpl wait_vertical_blank
 	rts
 
-
+; Change the common background color (first entry in the palette)
 change_background_color:
 	pha
 	lda #$3F
@@ -54,6 +62,8 @@ hide_sprites:
    bne @next_sprite ; sprite data is 256 octets, so when X is 0 again, we are done
    rts
 
+; set the basic information for a sprite. normally the sprite attributes are not set in runtime
+; for most sprites (e.g. changing palette or priority)
 ; a = sprite number, x=x, y=y
 set_sprite:
 	txa
@@ -72,15 +82,13 @@ set_sprite:
 	sta oam, x ; store tile_num
 	inx
 
-	;lda #0 ; store attributes
-	;sta oam, x
-	inx
+	inx ; skip attributes
 
 	pla ; pop x
 	sta oam, x
 	rts
 
-; defines the sprite the first time, usually the sprite attribute doesnt have to
+; defines the sprite the first time, usually the sprite attribute doesn't have to
 ; be updated each tick
 define_sprite:
 	txa
@@ -107,6 +115,7 @@ define_sprite:
 	sta oam, x
 	rts
 
+; copy all sprite data from RAM ($0200) to PPU
 dma_all_sprites:
 	lda #$02 ; dma copy from $0200 to OAM
 	sta OAM_DMA

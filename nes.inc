@@ -1,3 +1,8 @@
+;---------------------------------------------------------------------------------------------------
+;  Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/piot/nes-example
+;  Licensed under the MIT License. See LICENSE in the project root for license information.
+;---------------------------------------------------------------------------------------------------
+
 ; PPU. https://www.nesdev.org/wiki/PPU
 ; The "GPU" (Picture Processing Unit)
 
