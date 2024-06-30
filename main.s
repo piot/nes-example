@@ -51,6 +51,9 @@ entity_positions:
 entity_velocities:
     .res VELOCITY_ARRAY_SIZE
 
+entity_target_velocities:
+    .res VELOCITY_ARRAY_SIZE
+
 entity_max_velocities:
 	.res MAX_VELOCITY_ARRAY_SIZE
 

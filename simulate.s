@@ -7,13 +7,14 @@ simulate:
 	jsr read_joypad_and_set_direction
 	stx entity_input_directions ; the player avatar is on entity zero
 
-	jsr set_x_velocity_from_direction
+	jsr set_x_target_velocity_from_direction
+	jsr change_x_velocity_towards_target_velocity
 	jsr update_x_positions_from_velocity
 	rts
 
 
 ; ------
-set_x_velocity_from_direction:
+set_x_target_velocity_from_direction:
 	ldx #0
 @loop:
 	lda entity_input_directions,x
@@ -21,7 +22,30 @@ set_x_velocity_from_direction:
 	asl a
 	asl a
 	asl a
-	sta entity_velocities,x
+	asl a
+	sta entity_target_velocities,x
+	inx
+	cpx #INPUT_DIRECTION_ARRAY_SIZE
+	bne @loop
+	rts
+
+;
+change_x_velocity_towards_target_velocity:
+	ldx #0
+@loop:
+	lda entity_velocities,x
+	sec
+	sbc entity_target_velocities,x
+	; if diff is zero we are done
+	beq @done
+
+	bmi @less_than
+@greater_than:
+	dec entity_velocities,x
+	jmp @done
+@less_than:
+	inc entity_velocities,x
+@done:
 	inx
 	cpx #INPUT_DIRECTION_ARRAY_SIZE
 	bne @loop
