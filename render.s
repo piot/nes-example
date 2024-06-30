@@ -39,10 +39,42 @@ render:
 	lda entity_positions+1,x ; result in X
 	FIXED_TO_INT ; Y=high octet, A = low octet, result in A
 	sta position_x_integer ; store the resulting X position
+	ldy #0
+	lda entity_facings,y
+	sta facing_x
+	cmp #0
+	bmi @facing_left
+	; facing right
+	lda #0
+	sta offset_x_right
+
+	lda #8 ; negate this number
+	eor #$FF   ; This inverts all bits in A
+	clc        ; Clear the carry flag to ensure accurate addition
+	adc #$01   ; Add 1 to the inverted byte
+	sta offset_x_left
+	jmp @facing_done
+
+@facing_left:
+	lda #8 ; negate this number
+	eor #$FF   ; This inverts all bits in A
+	clc        ; Clear the carry flag to ensure accurate addition
+	adc #$01   ; Add 1 to the inverted byte
+	sta offset_x_right
+	lda #0
+	sta offset_x_left
+@facing_done:
+
+	ldy #0
 
 	lda #0
 	sta sprite_number
-	ldx position_x_integer
+
+	lda position_x_integer
+	clc ; clear carry, otherwise it might be added in the adc opcode
+	adc offset_x_left
+	tax
+
 	ldy #0
 	lda #0
 	sta tile_num
@@ -54,7 +86,7 @@ render:
 	; offset X with 8
 	lda position_x_integer
 	clc ; clear carry, otherwise it might be added in the adc opcode
-	adc #8
+	adc offset_x_right
 	tax
 
 	ldy #0
@@ -66,7 +98,11 @@ render:
 	lda #2
 	sta sprite_number
 
-	ldx position_x_integer
+	lda position_x_integer
+	clc ; clear carry, otherwise it might be added in the adc opcode
+	adc offset_x_left
+	tax
+
 	ldy #8
 	lda #16
 	sta tile_num
@@ -79,8 +115,9 @@ render:
 	; offset X with 8
 	lda position_x_integer
 	clc ; clear carry, otherwise it might be added in the adc opcode
-	adc #8
+	adc offset_x_right
 	tax
+
 	ldy #8
 	lda #17
 	sta tile_num

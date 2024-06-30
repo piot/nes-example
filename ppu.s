@@ -64,7 +64,7 @@ hide_sprites:
 
 ; set the basic information for a sprite. normally the sprite attributes are not set in runtime
 ; for most sprites (e.g. changing palette or priority)
-; a = sprite number, x=x, y=y
+; a = sprite number, x=x, y=y, facing
 set_sprite:
 	txa
 	pha ; save x
@@ -82,7 +82,16 @@ set_sprite:
 	sta oam, x ; store tile_num
 	inx
 
-	inx ; skip attributes
+	lda facing_x
+	cmp #0
+	bmi @face_left
+	lda #$00
+	jmp @facing_done
+@face_left:
+	lda #$40 ; highest bit is flip vertical
+@facing_done:
+	sta oam, x
+	inx
 
 	pla ; pop x
 	sta oam, x

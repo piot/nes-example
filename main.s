@@ -30,6 +30,9 @@ sprite_number: .res 1
 sprite_attribute: .res 1
 position_x_integer: .res 1
 position_y_integer: .res 1
+facing_x: .res 1
+offset_x_left: .res 1
+offset_x_right: .res 1
 
 ; --------------------------------------------------------------------------------------------------
 ; BSS segment
@@ -52,6 +55,9 @@ entity_velocities:
     .res VELOCITY_ARRAY_SIZE
 
 entity_target_velocities:
+    .res VELOCITY_ARRAY_SIZE
+
+entity_facings:
     .res VELOCITY_ARRAY_SIZE
 
 entity_max_velocities:

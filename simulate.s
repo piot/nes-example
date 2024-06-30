@@ -18,11 +18,23 @@ set_x_target_velocity_from_direction:
 	ldx #0
 @loop:
 	lda entity_input_directions,x
-	asl a
-	asl a
-	asl a
-	asl a
-	asl a
+	cmp #0
+	beq @equal
+	bpl @positive
+@negative:
+	lda #$FF
+	sta entity_facings,x
+	lda #$e7
+	jmp @done
+@positive:
+	lda #$01
+	sta entity_facings,x
+	lda #$19
+	jmp @done
+@equal:
+	lda #0
+
+@done:
 	sta entity_target_velocities,x
 	inx
 	cpx #INPUT_DIRECTION_ARRAY_SIZE
