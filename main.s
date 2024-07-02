@@ -37,7 +37,7 @@ offset_x_right: .res 1
 ; --------------------------------------------------------------------------------------------------
 ; BSS segment
 .segment "BSS" ; RAM variables that doesn't fit in ZEROPAGE
-NUM_ENTITIES = 10
+NUM_ENTITIES = $10
 ENTITY_POS_SIZE = 2        ; Each position is 2 octets (12.4 fixed-point)
 ENTITY_VELOCITY_SIZE = 1      ; Each velocity is 1 octet (4.4 fixed-point)
 ENTITY_INPUT_DIRECTION_SIZE = 1 ; $00, $01 or $FF
@@ -48,24 +48,41 @@ MAX_VELOCITY_ARRAY_SIZE = VELOCITY_ARRAY_SIZE
 COMMON_ARRAY_SIZE = POS_ARRAY_SIZE
 INPUT_DIRECTION_ARRAY_SIZE = ENTITY_INPUT_DIRECTION_SIZE * NUM_ENTITIES
 
-entity_positions:
-	.res POS_ARRAY_SIZE
+; x-values
 
-entity_velocities:
-	.res VELOCITY_ARRAY_SIZE
+entity_x_positions:
+    .res POS_ARRAY_SIZE
 
-entity_target_velocities:
-	.res VELOCITY_ARRAY_SIZE
+entity_x_velocities:
+    .res VELOCITY_ARRAY_SIZE
+
+entity_target_x_velocities:
+    .res VELOCITY_ARRAY_SIZE
 
 entity_facings:
 	.res VELOCITY_ARRAY_SIZE
 
-entity_max_velocities:
-	.res MAX_VELOCITY_ARRAY_SIZE
+entity_input_x_directions:
+    .res INPUT_DIRECTION_ARRAY_SIZE
+
+; y-values
+
+entity_input_action:
+    .res VELOCITY_ARRAY_SIZE
+
+entity_y_positions:
+    .res POS_ARRAY_SIZE
+
+entity_y_velocities:
+    .res VELOCITY_ARRAY_SIZE
+
+entity_y_gravities:
+    .res VELOCITY_ARRAY_SIZE
 
 
-entity_input_directions:
-	.res INPUT_DIRECTION_ARRAY_SIZE
+entity_status:
+    .res VELOCITY_ARRAY_SIZE
+
 
 ; --------------------------------------------------------------------------------------------------
 ; We store the sprite (OAM) information in this RAM area. The data here will be copied using a very
@@ -181,6 +198,7 @@ read_joypad_and_set_direction:
 	beq @check_vertical ; if zero jump
 	ldx #$ff ; -1
 @check_vertical:
+	tya
 	rts
 
 

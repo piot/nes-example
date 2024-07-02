@@ -35,10 +35,17 @@ render_init:
 render:
 	ldx #0
 
-	ldy entity_positions,x
-	lda entity_positions+1,x ; result in X
+	ldy entity_x_positions,x
+	lda entity_x_positions+1,x ; result in X
 	FIXED_TO_INT ; Y=high octet, A = low octet, result in A
 	sta position_x_integer ; store the resulting X position
+
+	ldy entity_y_positions,x
+	lda entity_y_positions+1,x ; result in X
+	FIXED_TO_INT ; Y=high octet, A = low octet, result in A
+	sta position_y_integer ; store the resulting y position
+
+
 	ldy #0
 	lda entity_facings,y
 	sta facing_x
@@ -75,7 +82,7 @@ render:
 	adc offset_x_left
 	tax
 
-	ldy #0
+	ldy position_y_integer
 	lda #0
 	sta tile_num
 	jsr set_sprite
@@ -89,7 +96,7 @@ render:
 	adc offset_x_right
 	tax
 
-	ldy #0
+	ldy position_y_integer
 	lda #1
 	sta tile_num
 	jsr set_sprite
@@ -103,7 +110,11 @@ render:
 	adc offset_x_left
 	tax
 
-	ldy #8
+	lda position_y_integer
+	clc
+	adc #8
+	tay ; position_y_integer+8
+
 	lda #16
 	sta tile_num
 	jsr set_sprite
@@ -118,7 +129,11 @@ render:
 	adc offset_x_right
 	tax
 
-	ldy #8
+	lda position_y_integer
+	clc
+	adc #8
+	tay ; position_y_integer+8
+
 	lda #17
 	sta tile_num
 	jsr set_sprite
