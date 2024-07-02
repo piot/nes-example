@@ -41,7 +41,7 @@ initialize_palettes:
 
 	ldx #0
 @loop:
-	lda palette_colors, x   ; Load color value from palette_colors array
+	lda palette_colors,x   ; Load color value from palette_colors array
 	sta PPU_DATA	  ; Write to PPU data port (palette memory)
 	inx			 ; Increment X to move to next palette entry
 	cpx #32		  ; Check if we've written all 32 entries
@@ -55,7 +55,7 @@ hide_sprites:
 	ldx #0
 
 @next_sprite:
-	sta oam, x ; set sprite Y = 255. Sprites are always enabled, but put them outside of the lower part of the screen.
+	sta oam,x ; set sprite Y = 255. Sprites are always enabled, but put them outside of the lower part of the screen.
 	inx ; move past y position
 	inx ; skip tile_number
 	inx ; skip attributes
