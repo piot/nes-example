@@ -1,14 +1,14 @@
 version	major=2,minor=0
 info	csym=0,file=9,lib=0,line=440,mod=1,scope=1,seg=10,span=355,sym=103,type=4
-file	id=0,name="main.s",size=6164,mtime=0x6683C620,mod=0
+file	id=0,name="main.s",size=6158,mtime=0x6683C8DE,mod=0
 file	id=1,name="background.chr",size=4096,mtime=0x6683B82A,mod=0
 file	id=2,name="sprites.chr",size=4096,mtime=0x6683B82A,mod=0
 file	id=3,name="nes.inc",size=1768,mtime=0x6683C5A3,mod=0
 file	id=4,name="fixedpoint.s",size=1039,mtime=0x6683C619,mod=0
 file	id=5,name="input.s",size=1514,mtime=0x6683C66C,mod=0
-file	id=6,name="ppu.s",size=2929,mtime=0x6683C626,mod=0
+file	id=6,name="ppu.s",size=2921,mtime=0x6683C8EF,mod=0
 file	id=7,name="render.s",size=2430,mtime=0x6683BF40,mod=0
-file	id=8,name="simulate.s",size=2464,mtime=0x6683B82A,mod=0
+file	id=8,name="simulate.s",size=2442,mtime=0x6683C8B7,mod=0
 line	id=0,file=7,line=108,span=220
 line	id=1,file=8,line=98,span=293
 line	id=2,file=6,line=46,span=74

@@ -141,14 +141,14 @@ reset:
 	ldx #$00       ; load 0 into x register
 
 @clear_loop:
-	sta $0000, x
-	sta $0100, x
-	sta $0200, x
-	sta $0300, x
-	sta $0400, x
-	sta $0500, x
-	sta $0600, x
-	sta $0700, x
+	sta $0000,x
+	sta $0100,x
+	sta $0200,x
+	sta $0300,x
+	sta $0400,x
+	sta $0500,x
+	sta $0600,x
+	sta $0700,x
 	inx
 	bne @clear_loop ; loops 256 times
 
@@ -172,13 +172,13 @@ read_joypad_and_set_direction:
 	tay ; for later processing below
 	ldx #0
 	and #$01 ; test right
-	beq @check_left; if zero jump
+	beq @check_left ; if zero jump
 	ldx #1
 	jmp @check_vertical
 @check_left:
 	tya ; bring back the mask from y
 	and #$02 ; test left
-	beq @check_vertical; if zero jump
+	beq @check_vertical ; if zero jump
 	ldx #$ff ; -1
 @check_vertical:
 	rts

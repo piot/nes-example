@@ -76,11 +76,11 @@ set_sprite:
 	tax
 
 	tya
-	sta oam, x ; store Y
+	sta oam,x ; store Y
 	inx
 
 	lda tile_num
-	sta oam, x ; store tile_num
+	sta oam,x ; store tile_num
 	inx
 
 	lda facing_x
@@ -91,11 +91,11 @@ set_sprite:
 @face_left:
 	lda #$40 ; highest bit is flip vertical
 @facing_done:
-	sta oam, x
+	sta oam,x
 	inx
 
 	pla ; pop x
-	sta oam, x
+	sta oam,x
 	rts
 
 ; defines the sprite the first time, usually the sprite attribute doesn't have to
@@ -110,19 +110,19 @@ define_sprite:
 	tax
 
 	tya
-	sta oam, x ; store Y
+	sta oam,x ; store Y
 	inx
 
 	lda tile_num
-	sta oam, x ; store tile_num
+	sta oam,x ; store tile_num
 	inx
 
 	lda sprite_attribute
-	sta oam, x
+	sta oam,x
 	inx
 
 	pla ; pop X
-	sta oam, x
+	sta oam,x
 	rts
 
 ; copy all sprite data from RAM ($0200) to PPU

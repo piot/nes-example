@@ -68,7 +68,7 @@ update_x_positions_from_velocity:
 	ldx #0
 	ldy #0
 @loop:
-    clc
+	clc
 
 	; since we can not add a signed 4.4 to an unsigned 12.4 fixed point, in a simple manner.
 	; we unfortunately have to check the sign of the velocity and do custom code for each case.
@@ -77,9 +77,9 @@ update_x_positions_from_velocity:
 
 	; positive velocity case, it is super simple, the normal adc should work
 	; positions += velocities
-    lda entity_positions+1,x
-    adc entity_velocities,y
-    sta entity_positions+1,x
+	lda entity_positions+1,x
+	adc entity_velocities,y
+	sta entity_positions+1,x
 
 	lda #0
 	adc entity_positions,x ; if carry is set ("overflow"), then position will be added by one otherwise zero
@@ -105,10 +105,10 @@ update_x_positions_from_velocity:
 @done:
 
 	; Advance two octets (12.4 fixed point).
-    inx
-    inx
+	inx
+	inx
 	iny
 
-	cpx #POS_ARRAY_SIZE  ; Check if we've processed all entities
-    bne @loop
+	cpx #POS_ARRAY_SIZE ; Check if we've processed all entities
+	bne @loop
 	rts
