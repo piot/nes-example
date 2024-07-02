@@ -1,0 +1,69 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Clean Build Artifacts",
+			"type": "shell",
+			"command": "rm",
+			"args": [
+				"-f",
+				"game.nes",
+				"game.dbg",
+				"game.fdb"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Assemble File",
+			"type": "shell",
+			"command": "ca65",
+			"args": [
+				"main.s",
+				"-g",
+				"-o", "main.o",
+				"-t", "nes"
+			],
+			"group": "build",
+			"dependsOn": "Clean Build Artifacts",
+			"problemMatcher": {
+				"owner": "ca65",
+				"fileLocation": ["absolute"],
+				"pattern": {
+					"regexp": "^([^\\s].*)\\((\\d+),(\\d+)\\):\\s+(warning|error):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				}
+			}
+		},
+		{
+			"label": "Link ROM",
+			"type": "shell",
+			"command": "ld65",
+			"args": [
+				"-C", "nes.cfg",
+				"-o", "game.nes",
+				"--dbgfile", "game.dbg",
+				"main.o"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"dependsOn": "Assemble File",
+			"problemMatcher": {
+				"owner": "ld65",
+				"fileLocation": ["absolute"],
+				"pattern": {
+					"regexp": "^([^\\s].*)\\((\\d+),(\\d+)\\):\\s+(warning|error):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				}
+			}
+	}]
+}
