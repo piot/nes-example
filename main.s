@@ -49,22 +49,23 @@ COMMON_ARRAY_SIZE = POS_ARRAY_SIZE
 INPUT_DIRECTION_ARRAY_SIZE = ENTITY_INPUT_DIRECTION_SIZE * NUM_ENTITIES
 
 entity_positions:
-    .res POS_ARRAY_SIZE
+	.res POS_ARRAY_SIZE
 
 entity_velocities:
-    .res VELOCITY_ARRAY_SIZE
+	.res VELOCITY_ARRAY_SIZE
 
 entity_target_velocities:
-    .res VELOCITY_ARRAY_SIZE
+	.res VELOCITY_ARRAY_SIZE
 
 entity_facings:
-    .res VELOCITY_ARRAY_SIZE
+	.res VELOCITY_ARRAY_SIZE
 
 entity_max_velocities:
 	.res MAX_VELOCITY_ARRAY_SIZE
 
+
 entity_input_directions:
-    .res INPUT_DIRECTION_ARRAY_SIZE
+	.res INPUT_DIRECTION_ARRAY_SIZE
 
 ; --------------------------------------------------------------------------------------------------
 ; We store the sprite (OAM) information in this RAM area. The data here will be copied using a very

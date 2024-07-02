@@ -39,28 +39,29 @@ initialize_palettes:
 	lda #$00
 	sta PPU_ADDR ; Set PPU address low byte
 
-    ldx #0
+	ldx #0
 @loop:
-    lda palette_colors, x   ; Load color value from palette_colors array
-    sta PPU_DATA      ; Write to PPU data port (palette memory)
-    inx             ; Increment X to move to next palette entry
-    cpx #32          ; Check if we've written all 32 entries
-    bne @loop
+	lda palette_colors, x   ; Load color value from palette_colors array
+	sta PPU_DATA	  ; Write to PPU data port (palette memory)
+	inx			 ; Increment X to move to next palette entry
+	cpx #32		  ; Check if we've written all 32 entries
+	bne @loop
 
-    rts
+
+	rts
 
 hide_sprites:
-   lda #255
-   ldx #0
+	lda #255
+	ldx #0
 
 @next_sprite:
-   sta oam, x ; set sprite Y = 255. Sprites are always enabled, but put them outside of the lower part of the screen.
-   inx ; move past y position
-   inx ; skip tile_number
-   inx ; skip attributes
-   inx ; skip X position
-   bne @next_sprite ; sprite data is 256 octets, so when X is 0 again, we are done
-   rts
+	sta oam, x ; set sprite Y = 255. Sprites are always enabled, but put them outside of the lower part of the screen.
+	inx ; move past y position
+	inx ; skip tile_number
+	inx ; skip attributes
+	inx ; skip X position
+	bne @next_sprite ; sprite data is 256 octets, so when X is 0 again, we are done
+	rts
 
 ; set the basic information for a sprite. normally the sprite attributes are not set in runtime
 ; for most sprites (e.g. changing palette or priority)

@@ -17,29 +17,29 @@
 ; and down
 ; sta pressed
 read_joypad0:
-    lda #$01 ; Signal that the controller should be read now
-    ; While the strobe bit is set, buttons will be continuously reloaded.
-    ; This means that reading from APU_JOYPAD1 will only return the state of the
-    ; first button: button A.
-    sta APU_JOYPAD1
+	lda #$01 ; Signal that the controller should be read now
+	; While the strobe bit is set, buttons will be continuously reloaded.
+	; This means that reading from APU_JOYPAD1 will only return the state of the
+	; first button: button A.
+	sta APU_JOYPAD1
 
-    lda #0 ; Signal that the poll is over
-    ; By storing 0 into APU_JOYPAD1, the strobe bit is cleared and the reloading stops.
-    ; This allows all 8 buttons (newly reloaded) to be read from APU_JOYPAD1.
-    sta APU_JOYPAD1
+	lda #0 ; Signal that the poll is over
+	; By storing 0 into APU_JOYPAD1, the strobe bit is cleared and the reloading stops.
+	; This allows all 8 buttons (newly reloaded) to be read from APU_JOYPAD1.
+	sta APU_JOYPAD1
 
-    ldy #8
-    ldx #0
+	ldy #8
+	ldx #0
 
 @loop:
-    lda APU_JOYPAD1
-    lsr a ; shift right. this is only done to get bit 0 -> Carry
+	lda APU_JOYPAD1
+	lsr a ; shift right. this is only done to get bit 0 -> Carry
 
-    txa
-    rol a ; rotate left, bit 0 is set from carry (the button just read)
-    tax
+	txa
+	rol a ; rotate left, bit 0 is set from carry (the button just read)
+	tax
 
-    dey
-    bne @loop
+	dey
+	bne @loop
 
-    rts
+	rts
