@@ -24,6 +24,7 @@ Game for NES hardware and emulators completely made in 6502 assembler.
 #### For playing the game
 
 * [Pinky](https://koute.github.io/pinky-web/). I prefer emulators that are web-based (webassembly), because it works on "all" platforms and require no installs.
+* [TetaNES](https://lukeworks.tech/tetanes-web).
 
 ### Sprite and Tile Editors
 
