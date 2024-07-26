@@ -7,15 +7,21 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: install cc65
         run: |
           echo 'deb http://download.opensuse.org/repositories/home:/strik/xUbuntu_22.10/ /' | sudo tee /etc/apt/sources.list.d/home:strik.list
           curl -fsSL https://download.opensuse.org/repositories/home:strik/xUbuntu_22.10/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_strik.gpg > /dev/null
           sudo apt update
           sudo apt install cc65
+
       - run: ca65 main.s -g -o main.o -t nes
+
       - run: ld65 -C nes.cfg -o game.nes --dbgfile game.dbg main.o
-      - uses: actions/upload-artifact@v2
+
+      - uses: actions/upload-artifact@v4
         with:
           name: game nes
           path: |
