@@ -6,16 +6,17 @@
 ; --------------------------------------------------------------------------------------------------
 ; The header is the information about the NES cartridge, that determines things as the
 ; ROM banks and if it is for NTSC or PAL and similar.
+; https://www.nesdev.org/wiki/INES
 .segment "HEADER"
 .byte "NES", $1A ; ID
 .byte 2 ; Number of 16 KB PRG ROM banks
 .byte 1 ; Number of 8 KB CHR ROM banks
-.byte $01 ; Flags 6: Mapper, mirroring, battery, trainer
-.byte $00 ; Flags 7: Mapper, VS/Playchoice, NES 2.0
+.byte $00 ; Flags 6: Mapper, mirroring, battery, trainer
+.byte $00 ; Flags 7: Mapper, VS/Playchoice, NES 2.0, 0 = original NES
 .byte $00 ; Flags 8: PRG-RAM size
-.byte $01 ; Flags 9: TV system - PAL
-.byte $00 ; Flags 10: TV system, PRG-RAM presence
-.byte $00, $00, $00, $00, $00 ; Padding bytes
+.byte $01 ; Flags 9: TV-system, 01 = PAL
+.byte $00 ; Flags 10: TV system, PRG-RAM presence (unofficial, rarely used extension)
+.byte $00, $00, $00, $00, $00  ; reserved
 
 ; --------------------------------------------------------------------------------------------------
 ; Zero page segment must be before code segments, so the compiler knows
