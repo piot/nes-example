@@ -29,3 +29,18 @@
 	ora temp
 
 .endmacro
+
+; the status flags are set based on the result of the comparison
+.macro FIXED_CMP value1, value2
+    lda value1+1       ; load the high byte of the first value
+    cmp value2+1       ; compare it with the high byte of the second value
+    bne @compare_done   ; if high bytes are not equal, branch to compare_done
+
+    ; if high bytes are equal, compare the lower parts of the fixed point
+    lda value1
+    cmp value2
+
+@compare_done:
+
+.endmacro
+
