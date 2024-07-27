@@ -4,37 +4,53 @@ simulate_init:
 simulate:
 	jsr read_joypad_and_set_direction
 	stx entity_input_x_directions ; the player avatar is on entity zero
-	and #$80
-	sta entity_input_action ; $80 or $00
+	sta entity_input_action ; $80, $40 or $00
+
 
 	jsr set_x_target_velocity_from_direction
 	jsr change_x_velocity_towards_target_velocity
 	jsr update_x_positions_from_velocity
 
 	jsr set_gravity_from_input_action ; if pressing jump, gravity is changed
+	jsr reset_velocity_from_input_action
 	jsr check_start_jump ; if resting and action is jump, set a negative y velocity (up)
 	jsr update_y_velocity_from_gravity
+	jsr clamp_y_velocity
 	jsr update_y_positions_from_velocity
 	jsr clamp_y_positions_against_ground
 
 	rts
 
 
+
 clamp_y_positions_against_ground:
 	ldx #0
 	ldy #0
 @loop:
-	ldy entity_y_positions,x
+	lda entity_y_positions,x
+	sta fixed_value1
 	lda entity_y_positions+1,x ; result in X
-	FIXED_TO_INT
-	cmp #$3
-	bpl @nothing_to_do
+	sta fixed_value1+1
 
-	lda #$3
+	lda #03
+	sta fixed_value2
+	lda #00
+	sta fixed_value2+1
+
+	FIXED_CMP fixed_value1, fixed_value2
+
+	bpl @nothing_to_do
+	bvc @nothing_to_do
+
+	lda fixed_value2
 	sta entity_y_positions,x
-	lda #$0
+	lda fixed_value2+1
 	sta entity_y_positions+1,x ; result in X
-	sta entity_y_velocities,y
+
+	lda #0
+	;sta entity_y_velocities,y
+
+	sta entity_status,y
 
 @nothing_to_do:
 	inx
@@ -49,7 +65,7 @@ check_start_jump:
 	ldx #0
 @loop:
 	lda entity_input_action,x
-	cmp #0
+	and #$40
 	beq @no_action ; no action skip status check
 
 	lda entity_status,x
@@ -62,10 +78,27 @@ check_start_jump:
 	sta entity_status,x
 
 
-	lda #$B0 ; (-80)
+	lda #$ec ; (-80)
 	sta entity_y_velocities,x
 
 @no_action:
+	inx
+	cpx #VELOCITY_ARRAY_SIZE
+	bne @loop
+	rts
+
+
+; input_action => gravity
+reset_velocity_from_input_action:
+	ldx #0
+@loop:
+	lda entity_input_action,x
+	and #$40
+	beq @reset_not_pressed
+	lda #0
+	sta entity_y_velocities,x
+	sta entity_status,x
+@reset_not_pressed:
 	inx
 	cpx #VELOCITY_ARRAY_SIZE
 	bne @loop
@@ -77,13 +110,13 @@ set_gravity_from_input_action:
 	ldx #0
 @loop:
 	lda entity_input_action,x
-	cmp #0
-	beq @equal
+	and #$80
+	bne @jump_not_pressed
 
 ; action (jump) is pressed
-	lda #$03
+	lda #$02
 	jmp @done
-@equal:
+@jump_not_pressed:
 	lda #$06
 
 @done:
@@ -106,6 +139,24 @@ update_y_velocity_from_gravity:
 	cpx #VELOCITY_ARRAY_SIZE
 	bne @loop
 	rts
+
+MAX_VELOCITY=9
+
+clamp_y_velocity:
+	ldx #0
+@loop:
+	clc
+	lda entity_y_velocities,x
+	cmp #MAX_VELOCITY
+	bmi @below
+	lda #MAX_VELOCITY
+	sta entity_y_velocities,x
+@below:
+	inx
+	cpx #VELOCITY_ARRAY_SIZE
+	bne @loop
+	rts
+
 
 ; ------
 set_x_target_velocity_from_direction:
