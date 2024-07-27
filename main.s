@@ -35,6 +35,9 @@ facing_x: .res 1
 offset_x_left: .res 1
 offset_x_right: .res 1
 
+fixed_value1: .res 2
+fixed_value2: .res 2
+
 ; --------------------------------------------------------------------------------------------------
 ; BSS segment
 .segment "BSS" ; RAM variables that doesn't fit in ZEROPAGE
