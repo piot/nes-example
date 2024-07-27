@@ -6,17 +6,22 @@
 ; --------------------------------------------------------------------------------------------------
 ; The header is the information about the NES cartridge, that determines things as the
 ; ROM banks and if it is for NTSC or PAL and similar.
-; https://www.nesdev.org/wiki/INES
+; Using [NES2.0 Header](https://www.nesdev.org/wiki/NES_2.0), since some emulators (Spiritualized) require it, it should be backwards
+; compatible with [INES](https://www.nesdev.org/wiki/INES).
 .segment "HEADER"
 .byte "NES", $1A ; ID
-.byte 2 ; Number of 16 KB PRG ROM banks
-.byte 1 ; Number of 8 KB CHR ROM banks
+.byte 2 ; Offset 4: Number of 16 KB PRG ROM banks
+.byte 1 ; Offset 5: Number of 8 KB CHR ROM banks
 .byte $00 ; Flags 6: Mapper, mirroring, battery, trainer
-.byte $00 ; Flags 7: Mapper, VS/Playchoice, NES 2.0, 0 = original NES
-.byte $00 ; Flags 8: PRG-RAM size
-.byte $01 ; Flags 9: TV-system, 01 = PAL
-.byte $00 ; Flags 10: TV system, PRG-RAM presence (unofficial, rarely used extension)
-.byte $00, $00, $00, $00, $00  ; reserved
+.byte $08 ; Flags 7: Mapper, VS/Playchoice, NES 2.0, 0 = original NES, $08 = NES2.0 header.
+.byte $00 ; Flags 8: Mapper MSB (previously PRG memory)
+.byte $00 ; Flags 9: PRG-ROM/CHR-ROM MSB (previously TV-system, 01 = PAL)
+.byte $00 ; Flags 10: PRG-RAM/EEPROM size (previously TV system, PRG-RAM presence (unofficial, rarely used extension))
+.byte $00 ; Flags 11: CHR-RAM size
+.byte $01 ; Flags 12: CPU/PPU Timing, $01 = Licensed PAL NES
+.byte $00 ; Flags 13: Extended System Type or Console Type
+.byte $00 ; Flags 14: Misc ROMS
+.byte $00 ; Flags 15: Default expansion device, $01=Standard NES/Famicom controllers. TODO: investigate why TetaNes cant handle $01 here
 
 ; --------------------------------------------------------------------------------------------------
 ; Zero page segment must be before code segments, so the compiler knows
