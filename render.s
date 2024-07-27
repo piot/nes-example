@@ -44,8 +44,7 @@ render:
 	lda entity_y_positions+1,x ; result in X
 	FIXED_TO_INT ; Y=high octet, A = low octet, result in A
 
-	lda #$10 ; TODO: Hack: position_y_integer is wrong at the moment, so show a constant y position.
-
+	; lda #$10 ; TODO: Hack: position_y_integer is wrong at the moment, so show a constant y position.
 	sta position_y_integer ; store the resulting y position
 
 
